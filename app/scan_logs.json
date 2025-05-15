@@ -1,79 +1,24 @@
 [
   {
     "username": "admin",
-    "filename": "00a70cbf45a04a032a4e91b4129c9e8b.png",
-    "timestamp": "2025-05-15 11:34:32.041776",
-    "rf_label": "Obfuscator.ACY",
-    "rf_confidence": 36.5,
-    "svm_label": "Lolyda.AA2",
-    "svm_confidence": 92.71,
-    "final_label": "Lolyda.AA2",
-    "final_confidence": 37.08
-  },
-  {
-    "username": "admin",
-    "filename": "00a50796e3a950c9e0e8d90034ab8983.png",
-    "timestamp": "2025-05-15 12:29:32.834734",
-    "rf_label": "Obfuscator.ACY",
-    "rf_confidence": 29.0,
-    "svm_label": "Lolyda.AA2",
-    "svm_confidence": 98.08,
-    "final_label": "Lolyda.AA2",
-    "final_confidence": 39.23
-  },
-  {
-    "username": "admin",
-    "filename": "00aa32053d7534da00195fd43fa85b5f.png",
-    "timestamp": "2025-05-15 12:51:28.942435",
-    "rf_label": "Obfuscator.ACY",
-    "rf_confidence": 38.0,
-    "svm_label": "Lolyda.AA2",
-    "svm_confidence": 97.88,
-    "final_label": "Lolyda.AA2",
-    "final_confidence": 39.15
-  },
-  {
-    "username": "admin",
     "filename": "jxrmMI8yPStoDdgE7Y4J.bytes",
-    "timestamp": "2025-05-15 12:52:00.567345",
+    "timestamp": "2025-05-15 17:59:43.172606",
     "rf_label": "Gatak",
     "rf_confidence": 38.5,
     "svm_label": "VB.AT",
-    "svm_confidence": 86.52,
+    "svm_confidence": 83.56,
     "final_label": "VB.AT",
-    "final_confidence": 34.61
+    "final_confidence": 33.42
   },
   {
     "username": "admin",
-    "filename": "jZGQELvdhm2H6rOJTXun.bytes",
-    "timestamp": "2025-05-15 13:05:10.842552",
-    "rf_label": "Tracur",
-    "rf_confidence": 45.0,
-    "svm_label": "VB.AT",
-    "svm_confidence": 40.63,
-    "final_label": "Tracur",
-    "final_confidence": 27.0
-  },
-  {
-    "username": "admin",
-    "filename": "k3OSYcwRsvCqeo7dTWQx.bytes",
-    "timestamp": "2025-05-15 13:10:58.627355",
-    "rf_label": "Vundo",
-    "rf_confidence": 99.5,
-    "svm_label": "Agent.FYI",
-    "svm_confidence": 97.36,
-    "final_label": "Vundo",
-    "final_confidence": 59.7
-  },
-  {
-    "username": "zodiac1710",
-    "filename": "00ef0df069582a2126bd97e32b726ab6.png",
-    "timestamp": "2025-05-15 13:13:02.150550",
-    "rf_label": "Kelihos_ver1",
-    "rf_confidence": 89.5,
-    "svm_label": "C2LOP.gen!g",
-    "svm_confidence": 53.09,
-    "final_label": "Kelihos_ver1",
-    "final_confidence": 53.7
+    "filename": "clean_sample.bytes",
+    "timestamp": "2025-05-15 17:59:54.035768",
+    "rf_label": "",
+    "rf_confidence": 0,
+    "svm_label": "Dontovo.A",
+    "svm_confidence": 54.34,
+    "final_label": "Dontovo.A",
+    "final_confidence": 54.34
   }
 ]

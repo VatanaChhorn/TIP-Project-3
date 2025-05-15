@@ -78,15 +78,26 @@ def extract_features_from_bytes(file_path):
     from collections import Counter
     with open(file_path, 'r', errors='ignore') as file:
         tokens = []
+        all_zeros = True
         for line in file:
             parts = line.strip().split()
-            tokens.extend(parts[1:])
-    token_counts = Counter(tokens)
-    features = [len(tokens)]
-    for i in range(256):
-        byte_token = f'{i:02X}'
-        features.append(token_counts.get(byte_token, 0))
-    return features
+            if len(parts) > 1:  # Skip empty lines
+                values = parts[1:]  # Skip address
+                tokens.extend(values)
+                # Check if line contains non-zero values
+                if any(val != '00' for val in values):
+                    all_zeros = False
+        
+        # If file is all zeros, return None to indicate clean file
+        if all_zeros:
+            return None
+            
+        token_counts = Counter(tokens)
+        features = [len(tokens)]
+        for i in range(256):
+            byte_token = f'{i:02X}'
+            features.append(token_counts.get(byte_token, 0))
+        return features
 
 @routes.route('/api/logs/pdf')
 def get_logs_pdf():
@@ -228,126 +239,124 @@ def predict():
     svm_label = ""
     svm_confidence = 0
     
-    # Get static features (.bytes analysis)
-    if filename.endswith('.bytes'):
-        static_features = extract_features_from_bytes(file_path)
-        # Convert to image for dynamic analysis
-        try:
-            # Create visualization from bytes for SVM model
+    try:
+        # For .bytes files
+        if filename.endswith('.bytes'):
+            # Get static features for RF model
+            static_features = extract_features_from_bytes(file_path)
+            # Generate image features for SVM model
             dynamic_features = convert_bytes_to_image_features(file_path)
-        except Exception as e:
-            print(f"Error generating image features: {str(e)}")
-            dynamic_features = None
-    
-    # Get dynamic features (.png analysis)
-    elif filename.endswith('.png'):
-        # Load image for SVM
-        try:
+            
+        # For .png files
+        elif filename.endswith('.png'):
+            # Get static features for RF model
+            static_features = extract_features_from_image(file_path)
+            # Get dynamic features for SVM model
             image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
             if image is not None:
                 resized_image = cv2.resize(image, (64, 64))
                 dynamic_features = resized_image.flatten()
-            
-            # Extract byte patterns from image for RF
-            try:
-                static_features = extract_features_from_image(file_path)
-            except Exception as e:
-                print(f"Error extracting static features: {str(e)}")
-                static_features = None
-        except Exception as e:
-            print(f"Error processing image: {str(e)}")
-            return jsonify({'error': 'Invalid image file'}), 400
-    else:
-        return jsonify({'error': 'Unsupported file type'}), 400
-    
-    # Process with RF model (static features)
-    if static_features is not None:
-        try:
-            scaled_static = scaler_rf.transform([static_features])
-            rf_probs = rf_model.predict_proba(scaled_static)[0]
-            rf_confidence = round(np.max(rf_probs) * 100, 2)
-            rf_pred = rf_model.predict(scaled_static)
-            rf_label = str(encoder_rf.inverse_transform(rf_pred)[0])
-            rf_label = label_map.get(rf_label, rf_label)
-        except Exception as e:
-            print(f"RF model error: {str(e)}")
-            rf_label = "Error"
-            rf_confidence = 0
-    
-    # Process with SVM model (dynamic features)
-    if dynamic_features is not None:
-        try:
-            scaled_dynamic = scaler_svm.transform([dynamic_features])
-            svm_probs = svm_model.predict_proba(scaled_dynamic)[0]
-            svm_confidence = round(np.max(svm_probs) * 100, 2)
-            predicted_class_index = np.argmax(svm_probs)
-            svm_label = str(encoder_svm.inverse_transform([predicted_class_index])[0])
-        except Exception as e:
-            print(f"SVM model error: {str(e)}")
-            svm_label = "Error"
-            svm_confidence = 0
-    
-    # Make final prediction using both models if available
-    final_label = ""
-    final_confidence = 0
-    
-    # Both models available - apply hybrid voting
-    if rf_label and svm_label:
-        # Apply weighted voting (60% RF, 40% SVM)
-        if rf_label == svm_label:
-            # If models agree, use the label with combined confidence
-            final_label = rf_label
-            final_confidence = round(0.6 * rf_confidence + 0.4 * svm_confidence, 2)
         else:
-            # Models disagree, use weighted confidence to determine winner
-            rf_weighted = 0.6 * rf_confidence
-            svm_weighted = 0.4 * svm_confidence
-            
-            if rf_weighted >= svm_weighted:
-                final_label = rf_label
-                final_confidence = round(rf_weighted, 2)
-            else:
-                final_label = svm_label
-                final_confidence = round(svm_weighted, 2)
-    
-    # If only one model available, use its result
-    elif rf_label:
-        final_label = rf_label
-        final_confidence = rf_confidence
-    elif svm_label:
-        final_label = svm_label
-        final_confidence = svm_confidence
-    else:
-        final_label = "Unknown"
-        final_confidence = 0
-    
-    # Save log
-    if 'username' in session:
-        log_entry = {
-            'username': session['username'],
-            'filename': filename,
-            'timestamp': str(datetime.datetime.now()),
-            'rf_label': rf_label,
-            'rf_confidence': rf_confidence,
-            'svm_label': svm_label,
-            'svm_confidence': svm_confidence,
-            'final_label': final_label,
-            'final_confidence': final_confidence
-        }
-        save_scan_log(log_entry)
+            return jsonify({'error': 'Unsupported file type'}), 400
 
-    return jsonify({
-        'method': 'Hybrid Analysis (RF + SVM)',
-        'rf_result': rf_label,
-        'rf_confidence': rf_confidence,
-        'svm_result': svm_label,
-        'svm_confidence': svm_confidence,
-        'final_result': final_label,
-        'final_confidence': final_confidence
-    }), 200
+        # Process with RF model (static features)
+        if static_features is not None:
+            try:
+                scaled_static = scaler_rf.transform([static_features])
+                rf_probs = rf_model.predict_proba(scaled_static)[0]
+                rf_confidence = round(np.max(rf_probs) * 100, 2)
+                rf_pred = rf_model.predict(scaled_static)
+                rf_label = str(encoder_rf.inverse_transform(rf_pred)[0])
+                rf_label = label_map.get(rf_label, rf_label)
+            except Exception as e:
+                print(f"RF model error: {str(e)}")
+                rf_label = "Error"
+                rf_confidence = 0
+        
+        # Process with SVM model (dynamic features)
+        if dynamic_features is not None:
+            try:
+                scaled_dynamic = scaler_svm.transform([dynamic_features])
+                svm_probs = svm_model.predict_proba(scaled_dynamic)[0]
+                svm_confidence = round(np.max(svm_probs) * 100, 2)
+                predicted_class_index = np.argmax(svm_probs)
+                svm_label = str(encoder_svm.inverse_transform([predicted_class_index])[0])
+            except Exception as e:
+                print(f"SVM model error: {str(e)}")
+                svm_label = "Error"
+                svm_confidence = 0
+        
+        # Make final prediction using both models
+        final_label = ""
+        final_confidence = 0
+        
+        # Both models available - apply hybrid voting
+        if rf_label and svm_label and rf_label != "Error" and svm_label != "Error":
+            # Calculate weighted confidences
+            rf_weighted = 0.6 * rf_confidence  # 60% weight to RF
+            svm_weighted = 0.4 * svm_confidence  # 40% weight to SVM
+            
+            # If models agree on the label
+            if rf_label == svm_label:
+                # Use the agreed label with combined weighted confidence
+                final_label = rf_label
+                final_confidence = round(rf_weighted + svm_weighted, 2)
+            else:
+                # Models disagree - use weighted confidence to determine winner
+                if rf_weighted >= svm_weighted:
+                    final_label = rf_label
+                    final_confidence = round(rf_weighted, 2)
+                else:
+                    final_label = svm_label
+                    final_confidence = round(svm_weighted, 2)
+        
+        # If only one model available or one failed, use the working model's result
+        elif rf_label and rf_label != "Error":
+            final_label = rf_label
+            final_confidence = rf_confidence
+        elif svm_label and svm_label != "Error":
+            final_label = svm_label
+            final_confidence = svm_confidence
+        else:
+            final_label = "Unknown"
+            final_confidence = 0
+
+        # Save log
+        if 'username' in session:
+            log_entry = {
+                'username': session['username'],
+                'filename': filename,
+                'timestamp': str(datetime.datetime.now()),
+                'rf_label': rf_label,
+                'rf_confidence': rf_confidence,
+                'svm_label': svm_label,
+                'svm_confidence': svm_confidence,
+                'final_label': final_label,
+                'final_confidence': final_confidence
+            }
+            save_scan_log(log_entry)
+
+        return jsonify({
+            'method': 'Hybrid Analysis (RF + SVM)',
+            'rf_result': rf_label,
+            'rf_confidence': rf_confidence,
+            'svm_result': svm_label,
+            'svm_confidence': svm_confidence,
+            'final_result': final_label,
+            'final_confidence': final_confidence
+        }), 200
+
+    except Exception as e:
+        print(f"Error during prediction: {str(e)}")
+        return jsonify({'error': 'Error processing file'}), 500
+    finally:
+        # Clean up uploaded file
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 # Helper function to extract static features from an image file
 def extract_features_from_image(image_path):
+    """Extract static features from image file for RF model"""
     # Read binary content from image file
     with open(image_path, 'rb') as f:
         binary_data = f.read()
@@ -355,7 +364,7 @@ def extract_features_from_image(image_path):
     # Convert binary to hex representation
     hex_data = binary_data.hex()
     
-    # Create byte frequency features (similar to .bytes files)
+    # Create byte frequency features
     features = [len(hex_data) // 2]  # Length of binary data
     byte_counts = {}
     for i in range(0, len(hex_data), 2):
@@ -372,12 +381,12 @@ def extract_features_from_image(image_path):
 
 # Helper function to convert bytes file to image features
 def convert_bytes_to_image_features(bytes_path):
+    """Convert .bytes file to image features for SVM model"""
     # Read .bytes file
     with open(bytes_path, 'r', errors='ignore') as f:
         content = f.read()
     
     # Convert content to a 2D representation
-    # We'll create a simple grayscale image using byte values
     bytes_values = []
     for line in content.split('\n'):
         parts = line.strip().split()
@@ -406,10 +415,7 @@ def convert_bytes_to_image_features(bytes_path):
     image = np.array(bytes_values).reshape(size, size).astype(np.uint8)
     image = cv2.resize(image, (64, 64))
     
-    # Return flattened features
     return image.flatten()
-
-    return jsonify({'error': 'Unsupported file type'}), 400
 
 # === API Endpoint: Get Scan Logs ===
 @routes.route('/api/logs')
