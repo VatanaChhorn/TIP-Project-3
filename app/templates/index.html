@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hybrid Malware Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main>
+  <section class="scan-section">
+    <h1>Hybrid Malware Detector</h1>
+    <p class="intro-text">Upload a file for analysis to detect potential malware using our hybrid machine learning system.</p>
+    
+    <div class="card upload-card">
+      <h3>Scan a File</h3>
+      <form id="uploadForm">
+        <div class="form-group">
+          <label for="file">Choose a .bytes or .png file:</label>
+          <input type="file" id="file" name="file" accept=".bytes,.png" required />
+          <p class="form-hint">We support .bytes files (extracted from executables) or .png images (visualized byte content)</p>
+        </div>
+        <button type="submit">Scan File</button>
+      </form>
+
+      <div class="results" id="results" style="display:none;">
+        <h4>Scan Results:</h4>
+        <div class="results-grid">
+          <div class="result-item">
+            <p><strong>Random Forest:</strong> <span id="rf_result"></span> <span class="confidence" id="rf_conf"></span></p>
+          </div>
+          <div class="result-item">
+            <p><strong>SVM:</strong> <span id="svm_result"></span> <span class="confidence" id="svm_conf"></span></p>
+          </div>
+          <div class="result-item final-result">
+            <p><strong>Hybrid Result:</strong> <span id="final_result"></span> <span class="confidence" id="final_conf"></span></p>
+          </div>
+        </div>
+        <div id="hybrid_message"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  const form = document.getElementById('uploadForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Show loading state
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    submitButton.textContent = 'Scanning...';
+    submitButton.disabled = true;
+    
+    const fileInput = document.getElementById('file');
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/predict', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById('results').style.display = 'block';
+
+      // Show all results
+      document.getElementById('rf_result').textContent = data.rf_result || 'N/A';
+      document.getElementById('rf_conf').textContent = data.rf_confidence !== undefined ? `(${data.rf_confidence}%)` : '';
+      document.getElementById('svm_result').textContent = data.svm_result || 'N/A';
+      document.getElementById('svm_conf').textContent = data.svm_confidence !== undefined ? `(${data.svm_confidence}%)` : '';
+      document.getElementById('final_result').textContent = data.final_result || data.result || 'N/A';
+      document.getElementById('final_conf').textContent = data.final_confidence !== undefined ? `(${data.final_confidence}%)` : '';
+
+      // Hybrid result message
+      let label = data.final_result || data.result || '';
+      let confidence = data.final_confidence !== undefined ? data.final_confidence : "N/A";
+
+      // Prepare explanation based on confidence score
+      let explanation = "";
+      if (confidence === "N/A") {
+        explanation = "Confidence could not be determined.";
+      } else {
+        const numericConfidence = parseFloat(confidence);
+        if (numericConfidence >= 90) {
+          explanation = "The system is highly confident about this classification.";
+        } else if (numericConfidence >= 70) {
+          explanation = "The system is moderately confident about this classification.";
+        } else if (numericConfidence >= 50) {
+          explanation = "The system is somewhat unsure. You might want to double-check.";
+        } else {
+          explanation = "The system is not confident. Consider running another scan.";
+        }
+      }
+
+      let messageHTML = "";
+      let colorIcon = "gray";
+      let recommendation = "Consider seeking expert advice or rescanning.";
+      let recommendationColor = "gray";
+      let emoji = "❓";
+
+      if (confidence !== "N/A") {
+        const numericConfidence = parseFloat(confidence);
+        if (numericConfidence >= 90) {
+          colorIcon = "var(--danger-color)";
+          emoji = "⚠️";
+          recommendation = "Do not open or share this file.";
+          recommendationColor = "var(--danger-color)";
+        } else if (numericConfidence >= 70) {
+          colorIcon = "var(--warning-color)";
+          emoji = "⚠️";
+          recommendation = "Proceed with caution. Double-check before using.";
+          recommendationColor = "var(--warning-color)";
+        } else if (numericConfidence >= 50) {
+          colorIcon = "var(--text-secondary)";
+          emoji = "❓";
+          recommendation = "Consider running another scan to be sure.";
+          recommendationColor = "var(--text-secondary)";
+        } else {
+          colorIcon = "var(--text-secondary)";
+          emoji = "❓";
+          recommendation = "The system is not confident. Consider seeking expert advice.";
+          recommendationColor = "var(--text-secondary)";
+        }
+      }
+
+      if (label && (label.toLowerCase() === "benign" || label.toLowerCase() === "clean")) {
+        messageHTML = `
+          <div class="result-message result-clean">
+            <div class="result-icon">✅</div>
+            <div class="result-details">
+              <h4>This file appears clean. No malware detected.</h4>
+              <p>Confidence: ${confidence}% – ${explanation}</p>
+              <p class="result-recommendation success">You can safely keep or share this file.</p>
+            </div>
+          </div>
+        `;
+      } else if (label) {
+        messageHTML = `
+          <div class="result-message result-warning">
+            <div class="result-icon" style="color:${colorIcon}">${emoji}</div>
+            <div class="result-details">
+              <h4>Warning: This file is classified as malware (${label}).</h4>
+              <p>Confidence: ${confidence}% – ${explanation}</p>
+              <p class="result-recommendation" style="color:${recommendationColor}">${recommendation}</p>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('hybrid_message').innerHTML = messageHTML;
+    } catch (error) {
+      console.error('Error:', error);
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('hybrid_message').innerHTML = `
+        <div class="result-message result-error">
+          <div class="result-icon">❌</div>
+          <div class="result-details">
+            <h4>Error scanning file</h4>
+            <p>There was an error processing your request. Please try again later.</p>
+          </div>
+        </div>
+      `;
+    } finally {
+      // Reset button state
+      submitButton.textContent = originalButtonText;
+      submitButton.disabled = false;
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+  });
+</script>
+
+</body>
+</html>

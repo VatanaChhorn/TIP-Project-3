@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Hybrid Malware Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main>
+  <h3>User Login</h3>
+  <form id="loginForm">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required />
+
+    <button type="submit">Login</button>
+    <div class="message" id="message" style="color: red; margin-top: 10px;"></div>
+  </form>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    const response = await fetch('http://127.0.0.1:5000/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      sessionStorage.setItem('userRole', result.role || 'user'); // Store user role
+      alert('Login successful. Redirecting...');
+      window.location.href = '/';
+    } else {
+      document.getElementById('message').textContent = result.message || 'Login failed.';
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+  });
+</script> 
+
+</body>
+</html>

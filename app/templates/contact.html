@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact - Hybrid Malware Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main>
+  <h3>Contact Information</h3>
+  <p>If you have questions or need support, please contact us:</p>
+  <p>Email: support@hybridmalwaredetector.com</p>
+  <p>Phone: +61 123 456 789</p>
+
+  <h3>Send Us a Message</h3>
+  <form id="contactForm">
+    <label for="message">Your Message:</label>
+    <textarea id="message" name="message" rows="5" placeholder="Type your message here..." required></textarea>
+    <button type="submit">Send</button>
+  </form>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alert('Contact form is a placeholder. No backend connected yet.');
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+  });
+</script>
+
+</body>
+</html>

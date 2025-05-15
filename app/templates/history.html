@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Public Scan History - Hybrid Malware Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main>
+  <h3>Recent Public Scans</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th>Final Label</th>
+        <th>Confidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>sample1.bytes</td>
+        <td>Trojan</td>
+        <td>93%</td>
+      </tr>
+      <tr>
+        <td>image1.png</td>
+        <td>Worm</td>
+        <td>83%</td>
+      </tr>
+    </tbody>
+  </table>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+  });
+</script>
+
+</body>
+</html>

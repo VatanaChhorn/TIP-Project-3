@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard - Hybrid Malware Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main class="dashboard-container">
+  <aside class="sidebar">
+    <h4>User Filters</h4>
+    <div id="userListLoading" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Loading users...</p>
+    </div>
+    <div id="userListEmpty" class="empty-state" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <p>No users found</p>
+    </div>
+    <ul id="userList"></ul>
+  </aside>
+  
+  <section class="dashboard-content">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search username..." aria-label="Search by username">
+      <button id="searchBtn" class="btn-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Search
+      </button>
+      <button id="resetBtn" class="btn-reset">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        Reset
+      </button>
+    </div>
+    
+    <div class="action-buttons">
+      <button id="exportBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+      <button id="pdfReportBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        Generate PDF Report
+      </button>
+    </div>
+    
+    <h3>Scan Log Records</h3>
+    
+    <div id="tableLoading" class="loading-indicator">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+    
+    <div id="tableEmpty" class="empty-state" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      <p>No logs found. Select a user or adjust your search criteria.</p>
+    </div>
+    
+    <div id="tableContainer" style="display: none;">
+      <table id="logTable">
+        <thead>
+          <tr>
+            <th>Filename</th>
+            <th>Timestamp</th>
+            <th>RF Label</th>
+            <th>RF Confidence</th>
+            <th>SVM Label</th>
+            <th>SVM Confidence</th>
+            <th>Final Label</th>
+            <th>Final Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Log rows will be inserted here by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  // Global variables
+  let allLogs = [];
+  let allUsers = [];
+  let selectedUser = null;
+
+  // Toggle loading states
+  function showLoading(elementId, isLoading) {
+    document.getElementById(elementId).style.display = isLoading ? 'flex' : 'none';
+  }
+
+  // Toggle empty states
+  function showEmpty(elementId, isEmpty) {
+    document.getElementById(elementId).style.display = isEmpty ? 'flex' : 'none';
+  }
+
+  // Show/hide table
+  function showTable(show) {
+    document.getElementById('tableContainer').style.display = show ? 'block' : 'none';
+  }
+
+  // Fetch users for sidebar
+  function loadUsers() {
+    showLoading('userListLoading', true);
+    showEmpty('userListEmpty', false);
+    
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(users => {
+        allUsers = users;
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        
+        if (users.length === 0) {
+          showEmpty('userListEmpty', true);
+        } else {
+          users.forEach(username => {
+            const li = document.createElement('li');
+            li.textContent = username;
+            li.onclick = () => {
+              selectedUser = username;
+              document.querySelectorAll('#userList li').forEach(el => el.classList.remove('active'));
+              li.classList.add('active');
+              filterAndRenderLogs();
+            };
+            userList.appendChild(li);
+          });
+        }
+        
+        showLoading('userListLoading', false);
+      })
+      .catch(error => {
+        console.error('Error loading users:', error);
+        showLoading('userListLoading', false);
+        showEmpty('userListEmpty', true);
+      });
+  }
+
+  // Fetch logs for table
+  function loadLogs() {
+    showLoading('tableLoading', true);
+    showEmpty('tableEmpty', false);
+    showTable(false);
+    
+    fetch('/api/logs')
+      .then(res => res.json())
+      .then(logs => {
+        allLogs = logs;
+        filterAndRenderLogs();
+      })
+      .catch(error => {
+        console.error('Error loading logs:', error);
+        showLoading('tableLoading', false);
+        showEmpty('tableEmpty', true);
+      });
+  }
+
+  // Filter logs by selected user or search
+  function filterAndRenderLogs() {
+    showLoading('tableLoading', true);
+    showEmpty('tableEmpty', false);
+    showTable(false);
+    
+    let logs = allLogs;
+    const searchValue = document.getElementById('searchInput').value.trim().toLowerCase();
+    
+    if (selectedUser) {
+      logs = logs.filter(log => log.username === selectedUser);
+    } else if (searchValue) {
+      logs = logs.filter(log => log.username.toLowerCase().includes(searchValue));
+    }
+    
+    setTimeout(() => {
+      renderLogs(logs);
+      showLoading('tableLoading', false);
+      
+      if (logs.length === 0) {
+        showEmpty('tableEmpty', true);
+      } else {
+        showTable(true);
+      }
+    }, 300); // Small delay to show loading state
+  }
+
+  // Render logs in table
+  function renderLogs(logs) {
+    const tbody = document.querySelector('#logTable tbody');
+    tbody.innerHTML = '';
+    
+    logs.forEach(log => {
+      const row = document.createElement('tr');
+      
+      // Add a class for malware files vs clean files
+      if (log.final_label && log.final_label.toLowerCase() !== 'benign' && log.final_label.toLowerCase() !== 'clean') {
+        row.classList.add('malware-row');
+      }
+      
+      row.innerHTML = `
+        <td title="${log.filename || ''}">${log.filename || ''}</td>
+        <td>${log.timestamp ? log.timestamp.substring(0, 16) : ''}</td>
+        <td>${formatLabel(log.rf_label)}</td>
+        <td>${formatConfidence(log.rf_confidence)}</td>
+        <td>${formatLabel(log.svm_label)}</td>
+        <td>${formatConfidence(log.svm_confidence)}</td>
+        <td>${formatLabel(log.final_label)}</td>
+        <td>${formatConfidence(log.final_confidence)}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+  
+  // Format label text
+  function formatLabel(label) {
+    if (!label) return '';
+    
+    if (label.toLowerCase() === 'benign' || label.toLowerCase() === 'clean') {
+      return `<span class="label-clean">${label}</span>`;
+    } else {
+      return `<span class="label-malware">${label}</span>`;
+    }
+  }
+  
+  // Format confidence percentage
+  function formatConfidence(value) {
+    if (!value && value !== 0) return '';
+    
+    const numValue = parseFloat(value);
+    let className = 'confidence-low';
+    
+    if (numValue >= 90) {
+      className = 'confidence-high';
+    } else if (numValue >= 70) {
+      className = 'confidence-medium';
+    }
+    
+    return `<span class="${className}">${numValue}%</span>`;
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    // Search button handler
+    document.getElementById('searchBtn').onclick = function() {
+      selectedUser = null;
+      document.querySelectorAll('#userList li').forEach(el => el.classList.remove('active'));
+      filterAndRenderLogs();
+    };
+    
+    // Reset button handler
+    document.getElementById('resetBtn').onclick = function() {
+      document.getElementById('searchInput').value = '';
+      selectedUser = null;
+      document.querySelectorAll('#userList li').forEach(el => el.classList.remove('active'));
+      filterAndRenderLogs();
+    };
+    
+    // Search on enter key
+    document.getElementById('searchInput').addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+      }
+    });
+    
+    // Export CSV handler
+    document.getElementById('exportBtn').onclick = function() {
+      let url = '/api/logs/export';
+      const searchValue = document.getElementById('searchInput').value.trim();
+      if (selectedUser) {
+        url += '?username=' + encodeURIComponent(selectedUser);
+      } else if (searchValue) {
+        url += '?username=' + encodeURIComponent(searchValue);
+      }
+      window.location = url;
+    };
+    
+    // PDF report button handler
+    document.getElementById('pdfReportBtn').addEventListener('click', function() {
+      let url = '/api/logs/pdf';
+      const searchValue = document.getElementById('searchInput').value.trim();
+      if (selectedUser) {
+        url += '?username=' + encodeURIComponent(selectedUser);
+      } else if (searchValue) {
+        url += '?username=' + encodeURIComponent(searchValue);
+      }
+      // Open PDF in new window
+      window.open(url, '_blank');
+    });
+
+    // Navbar loader
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+
+    // Load users and logs
+    loadUsers();
+    loadLogs();
+  });
+</script>
+</body>
+</html>

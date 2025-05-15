@@ -1,0 +1,109 @@
+<!-- User Profile Page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div id="navbar-container"></div>
+<main>
+  <h3>Your Profile</h3>
+  <div id="profileInfo"></div>
+  <h4>Edit Information</h4>
+  <form id="editProfileForm">
+    <label>Full Name: <input type="text" id="editFullname" name="fullname" required /></label><br>
+    <label>Email: <input type="email" id="editEmail" name="email" required /></label><br>
+    <button type="submit">Save Changes</button>
+    <span id="editProfileMsg"></span>
+  </form>
+  <h4>Change Password</h4>
+  <form id="changePasswordForm">
+    <label>Old Password: <input type="password" id="oldPassword" required /></label><br>
+    <label>New Password: <input type="password" id="newPassword" required /></label><br>
+    <button type="submit">Change Password</button>
+    <span id="changePasswordMsg"></span>
+  </form>
+  <h4>Profile Photo</h4>
+  <img id="profilePhoto" src="" alt="Profile Photo" style="max-width:120px;display:none;"/>
+  <form id="photoForm" enctype="multipart/form-data">
+    <input type="file" id="photoInput" name="photo" accept="image/*" required />
+    <button type="submit">Upload Photo</button>
+    <span id="photoMsg"></span>
+  </form>
+</main>
+<script>
+// Load navbar
+fetch('/navbar.html').then(r=>r.text()).then(t=>document.getElementById('navbar-container').innerHTML=t);
+
+const username = sessionStorage.getItem('username');
+if (!username) window.location.href = '/login';
+
+function loadProfile() {
+  fetch('/profile', {
+    headers: { 'X-Username': username }
+  })
+    .then(r=>r.json())
+    .then(data => {
+      document.getElementById('profileInfo').innerHTML = `
+        <b>Username:</b> ${data.username}<br>
+        <b>Full Name:</b> ${data.fullname}<br>
+        <b>Email:</b> ${data.email}<br>
+        <b>Joined:</b> ${data.created_at}<br>
+      `;
+      document.getElementById('editFullname').value = data.fullname;
+      document.getElementById('editEmail').value = data.email;
+      if (data.profile_photo) {
+        document.getElementById('profilePhoto').src = '/temp/' + data.profile_photo;
+        document.getElementById('profilePhoto').style.display = '';
+      }
+    });
+}
+loadProfile();
+
+document.getElementById('editProfileForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const fullname = document.getElementById('editFullname').value;
+  const email = document.getElementById('editEmail').value;
+  const res = await fetch('/profile', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json', 'X-Username': username},
+    body: JSON.stringify({fullname, email})
+  });
+  const data = await res.json();
+  document.getElementById('editProfileMsg').textContent = data.message;
+  if (res.ok) loadProfile();
+};
+
+document.getElementById('changePasswordForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const old_password = document.getElementById('oldPassword').value;
+  const new_password = document.getElementById('newPassword').value;
+  const res = await fetch('/profile/password', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json', 'X-Username': username},
+    body: JSON.stringify({old_password, new_password})
+  });
+  const data = await res.json();
+  document.getElementById('changePasswordMsg').textContent = data.message;
+};
+
+document.getElementById('photoForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const formData = new FormData();
+  formData.append('photo', document.getElementById('photoInput').files[0]);
+  // username is now sent via header
+  const res = await fetch('/profile/photo', {
+    method:'POST',
+    headers: {'X-Username': username},
+    body: formData
+  });
+  const data = await res.json();
+  document.getElementById('photoMsg').textContent = data.message;
+  if (res.ok) loadProfile();
+};
+</script>
+</body>
+</html>

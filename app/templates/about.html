@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About - Hybrid Malware Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<div id="navbar-container"></div>
+
+<main>
+  <h3>System Overview</h3>
+  <p>This web system allows you to scan files for malware using both static and dynamic analysis.</p>
+
+  <h3>How It Works</h3>
+  <ul>
+    <li><strong>Static Analysis (.bytes files):</strong> Uses Random Forest (RF) trained on Microsoft Malware Classification Challenge 2015 dataset.</li>
+    <li><strong>Dynamic Analysis (.png images):</strong> Uses Support Vector Machine (SVM) trained on the Malimg dataset.</li>
+    <li><strong>Hybrid Voting:</strong> Combines RF (60%) and SVM (40%) to give a final classification.</li>
+  </ul>
+
+  <h3>Datasets Used</h3>
+  <ul>
+    <li>Microsoft Malware Classification Challenge 2015</li>
+    <li>Malimg Dataset (Malware Images)</li>
+  </ul>
+
+  <h3>Disclaimer</h3>
+  <p>This system is developed for academic and research purposes only. It does not replace professional malware analysis tools.</p>
+</main>
+
+<footer>
+  <p>&copy; 2025 Hybrid Malware Detection | COS70008</p>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+  });
+</script>
+
+</body>
+</html>
