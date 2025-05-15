@@ -14,64 +14,68 @@
 <div id="navbar-container"></div>
 
 <main class="dashboard-container">
-  <aside class="sidebar">
-    <h4>User Filters</h4>
-    <div id="userListLoading" class="loading-indicator">
-      <div class="spinner"></div>
-      <p>Loading users...</p>
-    </div>
-    <div id="userListEmpty" class="empty-state" style="display: none;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-      <p>No users found</p>
-    </div>
-    <ul id="userList"></ul>
-  </aside>
-  
-  <section class="dashboard-content">
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search username..." aria-label="Search by username">
-      <button id="searchBtn" class="btn-search">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  <div class="dashboard-top">
+    <aside class="sidebar">
+      <h4>User Filters</h4>
+      <div id="userListLoading" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>Loading users...</p>
+      </div>
+      <div id="userListEmpty" class="empty-state" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
-        Search
-      </button>
-      <button id="resetBtn" class="btn-reset">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-          <path d="M3 3v5h5"></path>
-        </svg>
-        Reset
-      </button>
-    </div>
+        <p>No users found</p>
+      </div>
+      <ul id="userList"></ul>
+    </aside>
     
-    <div class="action-buttons">
-      <button id="exportBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        Export CSV
-      </button>
-      <button id="pdfReportBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-          <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-        Generate PDF Report
-      </button>
-    </div>
-    
+    <section class="dashboard-content">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search username..." aria-label="Search by username">
+        <button id="searchBtn" class="btn-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          Search
+        </button>
+        <button id="resetBtn" class="btn-reset">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          Reset
+        </button>
+      </div>
+      
+      <div class="action-buttons">
+        <button id="exportBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export CSV
+        </button>
+        <button id="pdfReportBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Generate PDF Report
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="dashboard-table">
     <h3>Scan Log Records</h3>
     
     <div id="tableLoading" class="loading-indicator">
@@ -97,11 +101,11 @@
             <th>Filename</th>
             <th>Timestamp</th>
             <th>RF Label</th>
-            <th>RF Confidence</th>
+            <th>RF Conf</th>
             <th>SVM Label</th>
-            <th>SVM Confidence</th>
+            <th>SVM Conf</th>
             <th>Final Label</th>
-            <th>Final Confidence</th>
+            <th>Final Conf</th>
           </tr>
         </thead>
         <tbody>
@@ -109,7 +113,7 @@
         </tbody>
       </table>
     </div>
-  </section>
+  </div>
 </main>
 
 <footer>

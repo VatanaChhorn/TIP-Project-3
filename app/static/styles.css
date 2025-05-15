@@ -449,23 +449,31 @@ footer {
 ============================ */
 .dashboard-container {
   display: flex;
+  flex-direction: column;
   gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  min-height: calc(100vh - 120px);
+  max-width: 100%;
+  margin: 0;
   padding: 1.5rem;
 }
 
-.sidebar {
-  width: 240px;
+.dashboard-top {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
   background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sidebar {
+  width: 240px;
   height: fit-content;
   position: sticky;
   top: 1.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .sidebar h4 {
@@ -474,6 +482,11 @@ footer {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   color: var(--text-primary);
+}
+
+.dashboard-content {
+  flex: 1;
+  min-width: 0;
 }
 
 #userList {
@@ -534,34 +547,6 @@ footer {
   background-color: white;
 }
 
-.dashboard-content {
-  flex: 1;
-  background-color: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-md);
-  min-width: 0;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.dashboard-content h3 {
-  color: var(--text-primary);
-  margin-bottom: 1.25rem;
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-}
-
-.dashboard-content h3:before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 18px;
-  background-color: var(--primary-color);
-  margin-right: 0.75rem;
-  border-radius: var(--radius-sm);
-}
-
 .search-bar {
   display: flex;
   gap: 0.75rem;
@@ -585,11 +570,70 @@ footer {
 }
 
 /* Table styling */
+#tableContainer {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 #logTable {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.925rem;
+  table-layout: fixed;
+}
+
+#logTable th,
+#logTable td {
+  padding: 1rem 0.875rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#logTable th:nth-child(1),
+#logTable td:nth-child(1) {
+  width: 25%; /* Filename - increased width */
+}
+
+#logTable th:nth-child(2),
+#logTable td:nth-child(2) {
+  width: 15%; /* Timestamp */
+  padding-right: 0.3125rem; /* 5px right padding */
+}
+
+#logTable th:nth-child(3),
+#logTable td:nth-child(3) {
+  width: 12%; /* RF Label */
+  padding-left: 0.3125rem; /* 5px left padding */
+}
+
+#logTable th:nth-child(4),
+#logTable td:nth-child(4) {
+  width: 8%; /* RF Conf */
+}
+
+#logTable th:nth-child(5),
+#logTable td:nth-child(5) {
+  width: 12%; /* SVM Label */
+}
+
+#logTable th:nth-child(6),
+#logTable td:nth-child(6) {
+  width: 8%; /* SVM Conf */
+}
+
+#logTable th:nth-child(7),
+#logTable td:nth-child(7) {
+  width: 12%; /* Final Label */
+}
+
+#logTable th:nth-child(8),
+#logTable td:nth-child(8) {
+  width: 8%; /* Final Conf */
 }
 
 #logTable thead {
@@ -616,16 +660,6 @@ footer {
 
 #logTable th:last-child {
   border-top-right-radius: var(--radius-sm);
-}
-
-#logTable td {
-  padding: 1rem 0.875rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: var(--text-primary);
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 #logTable tbody tr {
@@ -680,7 +714,7 @@ footer {
 
 /* Responsive dashboard */
 @media (max-width: 900px) {
-  .dashboard-container {
+  .dashboard-top {
     flex-direction: column;
   }
 
@@ -785,6 +819,20 @@ footer {
   color: var(--danger-color);
 }
 
+/* RF Label specific styles */
+#logTable td:nth-child(3) .label-malware {
+  background-color: rgba(139, 92, 246, 0.1); /* Purple background */
+  color: #8b5cf6; /* Purple text */
+}
+
+/* SVM Label specific styles */
+#logTable td:nth-child(5) .label-malware {
+  background-color: rgba(6, 182, 212, 0.1); /* Cyan background */
+  color: #06b6d4; /* Cyan text */
+}
+
+/* Final Label keeps the original red color */
+
 /* Confidence indicators */
 .confidence-high, .confidence-medium, .confidence-low {
   font-weight: 500;
@@ -844,4 +892,13 @@ button svg {
 .empty-state p {
   font-size: 0.95rem;
   max-width: 250px;
+}
+
+.dashboard-table {
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  margin-top: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
