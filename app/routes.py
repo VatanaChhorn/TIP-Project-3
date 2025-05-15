@@ -4,10 +4,10 @@ import json
 import datetime
 import numpy as np
 import cv2
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, url_for
 from werkzeug.utils import secure_filename
 import hashlib
-from flask import session, redirect, url_for, render_template
+from flask import session, render_template
 import io
 from fpdf import FPDF
 from flask import make_response
@@ -484,3 +484,10 @@ def login():
         return jsonify({"message": "Login successful.", "role": role}), 200
 
     return jsonify({"message": "Invalid username or password."}), 401
+
+@routes.route('/logout')
+def logout():
+    # Clear the session
+    session.clear()
+    # Redirect to home page
+    return redirect('/')
