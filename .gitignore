@@ -104,4 +104,5 @@ Thumbs.dbj
 
 # Ignore dataset folder
 malimg/
-microsoft/
+test/
+train/
