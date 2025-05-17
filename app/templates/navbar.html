@@ -16,13 +16,16 @@
     </div>
     <div class="navbar-right">
       <ul class="navbar-nav">
+        {% if not session.get('username') %}
         <li class="nav-item" id="loginLink"><a class="nav-link" href="/login">Login</a></li>
         <li class="nav-item" id="registerLink"><a class="nav-link" href="/register">Register</a></li>
-        <li class="nav-item d-none" id="logoutLink">
+        {% else %}
+        <li class="nav-item" id="logoutLink">
           <form action="/logout" method="GET" style="margin: 0; padding: 0;">
             <button type="submit" class="nav-link" style="background: none; border: none; cursor: pointer;">Logout</button>
           </form>
         </li>
+        {% endif %}
       </ul>
     </div>
   </div>
@@ -30,8 +33,6 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const userRole = sessionStorage.getItem('userRole');
-    
     // Highlight active page
     const currentPath = window.location.pathname;
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -39,20 +40,9 @@
         link.classList.add('active');
       }
     });
-
-    // Default: hide protected links, show login/register
-    document.getElementById('adminLink').classList.add('d-none');
-    document.getElementById('loginLink').classList.remove('d-none');
-    document.getElementById('registerLink').classList.remove('d-none');
-    document.getElementById('logoutLink').classList.add('d-none');
-
-    if (userRole === 'user' || userRole === 'admin') {
-      document.getElementById('loginLink').classList.add('d-none');
-      document.getElementById('registerLink').classList.add('d-none');
-      document.getElementById('logoutLink').classList.remove('d-none');
-    }
-
-    if (userRole === 'admin') {
+    
+    // Show admin link if user is admin
+    if ('{{ session.get("role", "") }}' === 'admin') {
       document.getElementById('adminLink').classList.remove('d-none');
     }
   });

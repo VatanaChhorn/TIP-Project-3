@@ -20,5 +20,49 @@
     "svm_confidence": 54.34,
     "final_label": "Dontovo.A",
     "final_confidence": 54.34
+  },
+  {
+    "username": "admin",
+    "filename": "k4csoPNJnWbEFVXUarZi.bytes",
+    "timestamp": "2025-05-17 23:50:42.160533",
+    "rf_label": "Vundo",
+    "rf_confidence": 100.0,
+    "svm_label": "Lolyda.AA3",
+    "svm_confidence": 24.74,
+    "final_label": "Vundo",
+    "final_confidence": 60.0
+  },
+  {
+    "username": "zodiac1710",
+    "filename": "K5PTipJ9XhUo4ZNeMW2a.bytes",
+    "timestamp": "2025-05-18 00:02:36.545185",
+    "rf_label": "Vundo",
+    "rf_confidence": 100.0,
+    "svm_label": "Swizzor.gen!I",
+    "svm_confidence": 18.08,
+    "final_label": "Vundo",
+    "final_confidence": 60.0
+  },
+  {
+    "username": "zodiac1710",
+    "filename": "l7qfOdYCnJ0oN21TFHPm.bytes",
+    "timestamp": "2025-05-18 00:02:43.843408",
+    "rf_label": "Gatak",
+    "rf_confidence": 93.5,
+    "svm_label": "Swizzor.gen!I",
+    "svm_confidence": 86.48,
+    "final_label": "Gatak",
+    "final_confidence": 56.1
+  },
+  {
+    "username": "zodiac1710",
+    "filename": "00a6fb4c9c3a7894b7d43c32c5a223b3.png",
+    "timestamp": "2025-05-18 00:02:56.274981",
+    "rf_label": "Obfuscator.ACY",
+    "rf_confidence": 80.0,
+    "svm_label": "Agent.FYI",
+    "svm_confidence": 96.84,
+    "final_label": "Obfuscator.ACY",
+    "final_confidence": 48.0
   }
 ]

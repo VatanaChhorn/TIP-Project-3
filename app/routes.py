@@ -116,6 +116,8 @@ def get_logs_pdf():
     
     # Create PDF with FPDF - ensure landscape orientation for better table display
     pdf = FPDF(orientation='L')  # 'L' for landscape orientation
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
     pdf.add_page()
     
     # Add title
@@ -129,11 +131,18 @@ def get_logs_pdf():
     pdf.cell(0, 10, f"Generated: {current_time}", 0, 1, 'R')
     pdf.ln(5)
     
-    # Recalculate column widths for landscape mode - make proportional
+    # Define colors for labels and confidence
+    clean_color = (16, 185, 129)  # Success green
+    malware_color = (239, 68, 68)  # Danger red
+    conf_high_color = (16, 185, 129)  # High confidence green
+    conf_med_color = (245, 158, 11)  # Medium confidence orange
+    conf_low_color = (239, 68, 68)  # Low confidence red
+    
+    # Calculate column widths based on table proportions from admin.html
     total_width = pdf.w - 20  # Total width minus margins
     col_widths = [
-        total_width * 0.28,  # Filename (28%)
-        total_width * 0.14,  # Timestamp (14%)
+        total_width * 0.25,  # Filename (25%)
+        total_width * 0.15,  # Timestamp (15%)
         total_width * 0.12,  # RF Label (12%)
         total_width * 0.08,  # RF Conf (8%)
         total_width * 0.12,  # SVM Label (12%)
@@ -142,33 +151,70 @@ def get_logs_pdf():
         total_width * 0.08   # Final Conf (8%)
     ]
     
-    # Add table headers
+    # Add table headers with styling
     pdf.set_font('Arial', 'B', 10)
+    pdf.set_fill_color(249, 250, 251)  # Light gray background for header
     headers = ['Filename', 'Timestamp', 'RF Label', 'RF Conf', 'SVM Label', 'SVM Conf', 'Final Label', 'Final Conf']
     
     for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
+        pdf.cell(col_widths[i], 10, header, 1, 0, 'L', True)
     pdf.ln()
     
-    # Add table data with fixed cell heights
+    # Helper function to format confidence values
+    def get_confidence_color(value):
+        if value >= 90:
+            return conf_high_color
+        elif value >= 70:
+            return conf_med_color
+        return conf_low_color
+    
+    # Add table data with styling
     pdf.set_font('Arial', '', 9)
     for log in logs:
-        # Limit filename length to prevent overflow
+        # Filename column with ellipsis if too long
         filename = log.get('filename', '')
         if len(filename) > 40:
             filename = filename[:37] + '...'
-            
-        pdf.cell(col_widths[0], 8, filename, 1)
-        pdf.cell(col_widths[1], 8, log.get('timestamp', '')[:16], 1)  # Trim timestamp
-        pdf.cell(col_widths[2], 8, log.get('rf_label', ''), 1)
-        pdf.cell(col_widths[3], 8, str(log.get('rf_confidence', '')), 1)
-        pdf.cell(col_widths[4], 8, log.get('svm_label', ''), 1)
-        pdf.cell(col_widths[5], 8, str(log.get('svm_confidence', '')), 1)
-        pdf.cell(col_widths[6], 8, log.get('final_label', ''), 1)
-        pdf.cell(col_widths[7], 8, str(log.get('final_confidence', '')), 1)
+        pdf.cell(col_widths[0], 8, filename, 1, 0, 'L')
+        
+        # Timestamp column
+        timestamp = log.get('timestamp', '')[:16]  # Trim to date and time only
+        pdf.cell(col_widths[1], 8, timestamp, 1, 0, 'L')
+        
+        # RF Label with color
+        rf_label = log.get('rf_label', '')
+        pdf.set_text_color(*(clean_color if rf_label.lower() in ['benign', 'clean', ''] else malware_color))
+        pdf.cell(col_widths[2], 8, rf_label, 1, 0, 'L')
+        
+        # RF Confidence with color
+        rf_conf = float(log.get('rf_confidence', 0))
+        pdf.set_text_color(*get_confidence_color(rf_conf))
+        pdf.cell(col_widths[3], 8, f"{rf_conf}%", 1, 0, 'L')
+        
+        # SVM Label with color
+        svm_label = log.get('svm_label', '')
+        pdf.set_text_color(*(clean_color if svm_label.lower() in ['benign', 'clean', ''] else malware_color))
+        pdf.cell(col_widths[4], 8, svm_label, 1, 0, 'L')
+        
+        # SVM Confidence with color
+        svm_conf = float(log.get('svm_confidence', 0))
+        pdf.set_text_color(*get_confidence_color(svm_conf))
+        pdf.cell(col_widths[5], 8, f"{svm_conf}%", 1, 0, 'L')
+        
+        # Final Label with color
+        final_label = log.get('final_label', '')
+        pdf.set_text_color(*(clean_color if final_label.lower() in ['benign', 'clean', ''] else malware_color))
+        pdf.cell(col_widths[6], 8, final_label, 1, 0, 'L')
+        
+        # Final Confidence with color
+        final_conf = float(log.get('final_confidence', 0))
+        pdf.set_text_color(*get_confidence_color(final_conf))
+        pdf.cell(col_widths[7], 8, f"{final_conf}%", 1, 0, 'L')
+        
         pdf.ln()
+        pdf.set_text_color(0, 0, 0)  # Reset text color
     
-    # Summary statistics - use more space for malware distribution
+    # Add summary statistics
     pdf.ln(10)
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 10, 'Summary Statistics', 0, 1)
@@ -185,26 +231,26 @@ def get_logs_pdf():
         
         pdf.cell(0, 10, "Malware Distribution:", 0, 1)
         
-        # Improved layout for malware distribution - use even more space in landscape
-        items_per_column = 3
-        col_width = 90  # Wider columns in landscape mode
+        # Improved layout for malware distribution
+        items_per_row = 3
         x_start = pdf.get_x()
         y_start = pdf.get_y()
+        max_width = col_widths[0] + col_widths[1]  # Use first two columns width
         
         for i, (label, count) in enumerate(malware_counts.items()):
             percentage = (count / len(logs)) * 100
-            col = i // items_per_column
-            row = i % items_per_column
+            row = i // items_per_row
+            col = i % items_per_row
             
             # Position for this item
-            pdf.set_xy(x_start + (col * col_width), y_start + (row * 8))
-            pdf.cell(col_width, 8, f"- {label}: {count} ({percentage:.1f}%)", 0)
-        
-        # Reset position after the malware distribution
-        max_rows = (len(malware_counts) + items_per_column - 1) // items_per_column
-        pdf.set_y(y_start + (max_rows * 8) + 10)
+            x = x_start + (col * max_width)
+            y = y_start + (row * 8)
+            
+            pdf.set_xy(x, y)
+            pdf.set_text_color(*(clean_color if label.lower() in ['benign', 'clean'] else malware_color))
+            pdf.cell(max_width, 8, f"- {label}: {count} ({percentage:.1f}%)", 0)
     
-    # Generate PDF with proper encoding
+    # Generate PDF
     pdf_output = io.BytesIO()
     pdf_string = pdf.output(dest='S')
     pdf_output.write(pdf_string.encode('latin-1'))
@@ -487,7 +533,11 @@ def login():
         session['username'] = username
         session['role'] = user.get('role', 'user')
         role = user.get('role', 'user')
-        return jsonify({"message": "Login successful.", "role": role}), 200
+        return jsonify({
+            "message": "Login successful.", 
+            "role": role,
+            "username": username
+        }), 200
 
     return jsonify({"message": "Invalid username or password."}), 401
 
