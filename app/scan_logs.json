@@ -284,5 +284,16 @@
     "svm_confidence": 47.37,
     "final_label": "Ramnit",
     "final_confidence": 47.1
+  },
+  {
+    "username": "admin",
+    "filename": "KEhusGlH2O4qwTymPZRQ.bytes",
+    "timestamp": "2025-05-18 17:14:32.616100",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 91.79,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.72
   }
 ]
