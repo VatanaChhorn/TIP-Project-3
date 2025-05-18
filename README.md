@@ -126,9 +126,6 @@ The system provides several API endpoints:
 ## Contributing
 If you would like to contribute, please fork the repository and submit a pull request.
 
-## License
-Include the license information here.
-
 ## Acknowledgments
 All teammates
 
