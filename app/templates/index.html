@@ -60,6 +60,23 @@
 
 <script>
   const form = document.getElementById('uploadForm');
+  let malwareInfo = {}; // Will store malware info from server
+
+  // Fetch malware information from server on load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Load navbar
+    fetch('/navbar.html')
+      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
+      .then(data => document.getElementById('navbar-container').innerHTML = data)
+      .catch(console.error);
+    
+    // Load malware info
+    fetch('/api/malware-info')
+      .then(res => res.ok ? res.json() : Promise.reject('Failed to load malware info'))
+      .then(data => malwareInfo = data)
+      .catch(error => console.error('Error loading malware info:', error));
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -197,12 +214,17 @@
           </div>
         `;
       } else if (label) {
+        // Get malware info if available
+        const malwareType = malwareInfo[label] ? malwareInfo[label].type : "Malware";
+        const malwareBehavior = malwareInfo[label] ? malwareInfo[label].behavior : recommendation;
+        
         messageHTML = `
           <div class="result-message result-warning">
             <div class="result-icon" style="color:${colorIcon}">${emoji}</div>
             <div class="result-details">
-              <h4>Warning: This file is classified as malware (${label}).</h4>
+              <h4>Warning: This file is classified as ${malwareType} (${label}).</h4>
               <p>Confidence: ${confidence}% – ${explanation}</p>
+              <p class="result-recommendation" style="color:${recommendationColor}">${malwareBehavior}</p>
               <p class="result-recommendation" style="color:${recommendationColor}">${recommendation}</p>
             </div>
           </div>
@@ -227,15 +249,6 @@
       submitButton.textContent = originalButtonText;
       submitButton.disabled = false;
     }
-  });
-</script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    fetch('/navbar.html')
-      .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
-      .then(data => document.getElementById('navbar-container').innerHTML = data)
-      .catch(console.error);
   });
 </script>
 

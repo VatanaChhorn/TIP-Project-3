@@ -185,5 +185,104 @@
     "svm_confidence": 90.97,
     "final_label": "Kelihos_ver3",
     "final_confidence": 96.39
+  },
+  {
+    "username": "admin",
+    "filename": "Kd12HQZcimaelnDO9EUh.bytes",
+    "timestamp": "2025-05-18 16:17:50.457463",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 92.48,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.99
+  },
+  {
+    "username": "admin",
+    "filename": "kedWYlqLXtZ4URpVjTKA.bytes",
+    "timestamp": "2025-05-18 16:18:14.765243",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 99.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 93.16,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.66
+  },
+  {
+    "username": "admin",
+    "filename": "l1sD7zk0wFXmaGnSgIjq.bytes",
+    "timestamp": "2025-05-18 16:18:22.146405",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 99.5,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 86.9,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 94.46
+  },
+  {
+    "username": "admin",
+    "filename": "KE3w1tc4flX7UngQ5yTq.bytes",
+    "timestamp": "2025-05-18 16:18:27.633304",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 92.11,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.84
+  },
+  {
+    "username": "admin",
+    "filename": "kChVuJ4xHPYBjWz26EAq.bytes",
+    "timestamp": "2025-05-18 16:21:54.189480",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 90.61,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.24
+  },
+  {
+    "username": "admin",
+    "filename": "kCq4p9vu85HPdKmwYrQf.bytes",
+    "timestamp": "2025-05-18 16:23:47.867165",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 92.0,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.8
+  },
+  {
+    "username": "admin",
+    "filename": "kdGtRWsX5KwEOfqzeQVc.bytes",
+    "timestamp": "2025-05-18 16:25:17.975168",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 91.21,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.48
+  },
+  {
+    "username": "admin",
+    "filename": "KCvj7cQ1dHEFDBruTZpV.bytes",
+    "timestamp": "2025-05-18 16:28:25.537446",
+    "rf_label": "Kelihos_ver3",
+    "rf_confidence": 100.0,
+    "svm_label": "Kelihos_ver3",
+    "svm_confidence": 91.45,
+    "final_label": "Kelihos_ver3",
+    "final_confidence": 96.58
+  },
+  {
+    "username": "admin",
+    "filename": "KDQ13ouamdPnSlhzTRJe.bytes",
+    "timestamp": "2025-05-18 17:02:44.058589",
+    "rf_label": "Ramnit",
+    "rf_confidence": 78.5,
+    "svm_label": "Lollipop",
+    "svm_confidence": 47.37,
+    "final_label": "Ramnit",
+    "final_confidence": 47.1
   }
 ]

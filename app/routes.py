@@ -18,6 +18,7 @@ from reportlab.lib.units import inch
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+# Global mappings for model labels and malware types
 label_map = {
     "1": "Ramnit",
     "2": "Lollipop",
@@ -28,6 +29,32 @@ label_map = {
     "7": "Obfuscator.ACY",
     "8": "Gatak",
     "9": "Yuner.A"
+}
+
+# Define malware types mapping - centralized for entire application
+malware_types = {
+    "Ramnit": "Worm / Virus / Banking Trojan",
+    "Lollipop": "Adware",
+    "Kelihos_ver3": "Botnet / Trojan",
+    "Vundo": "Trojan",
+    "Simda": "Backdoor Trojan",
+    "Tracur": "Trojan / Search Redirector",
+    "Kelihos_ver1": "Botnet / Trojan",
+    "Obfuscator.ACY": "Obfuscation Tool",
+    "Gatak": "Trojan / Downloader"
+}
+
+# Define malware behaviors
+malware_behaviors = {
+    "Ramnit": "This malware could self-replicate, steal credentials, infect executables, and spread via drives.",
+    "Lollipop": "This malware could display intrusive ads, track your behavior, and hijack your browser.",
+    "Kelihos_ver3": "This malware could send spam, steal your data, and add your system to a peer-to-peer botnet.",
+    "Vundo": "This malware could display pop-up ads, download other malware, and slow down your system.",
+    "Simda": "This malware could open your system to remote control and download additional malware.",
+    "Tracur": "This malware could redirect your search results and install additional malware.",
+    "Kelihos_ver1": "This malware could send spam, steal your data, and add your system to a peer-to-peer botnet.",
+    "Obfuscator.ACY": "This malware could hide malicious code to evade detection and enable other malware.",
+    "Gatak": "This malware could install additional malware and spread via pirated software."
 }
 
 # Add models folder to path
@@ -102,6 +129,50 @@ def extract_features_from_bytes(file_path):
             features.append(token_counts.get(byte_token, 0))
         return features
 
+# Helper function to convert bytes file to image features
+def convert_bytes_to_image_features(bytes_path):
+    """Convert .bytes file to image features for SVM model"""
+    # Read .bytes file
+    with open(bytes_path, 'r', errors='ignore') as f:
+        content = f.read()
+    
+    # Convert content to a 2D representation
+    bytes_values = []
+    for line in content.split('\n'):
+        parts = line.strip().split()
+        if len(parts) > 1:  # Skip empty lines
+            row = []
+            for byte in parts[1:]:  # Skip address
+                try:
+                    value = int(byte, 16)
+                    row.append(value)
+                except ValueError:
+                    row.append(0)  # Use 0 for invalid values
+            bytes_values.extend(row)
+    
+    # Create a square image
+    size = int(np.sqrt(len(bytes_values)))
+    if size < 64:
+        size = 64  # Minimum size
+    
+    # Pad or truncate to size²
+    if len(bytes_values) < size * size:
+        bytes_values.extend([0] * (size * size - len(bytes_values)))
+    elif len(bytes_values) > size * size:
+        bytes_values = bytes_values[:size * size]
+    
+    # Reshape and resize to 64x64
+    image = np.array(bytes_values).reshape(size, size).astype(np.uint8)
+    image = cv2.resize(image, (64, 64))
+    
+    return image.flatten()
+
+# Helper function to get malware type from label
+def get_malware_type(label):
+    if not label or label.lower() in ('benign', 'clean', 'error', 'unknown'):
+        return 'Clean'
+    return malware_types.get(label, 'Unknown Malware')
+
 # === File Scan Endpoint with True Hybrid Mode ===
 @routes.route('/predict', methods=['POST'])
 def predict():
@@ -117,8 +188,6 @@ def predict():
     uploaded_file.save(file_path)
 
     # Variables to store features and predictions
-    static_features = None
-    dynamic_features = None
     rf_label = ""
     rf_confidence = 0
     svm_label = ""
@@ -234,44 +303,6 @@ def predict():
         if os.path.exists(file_path):
             os.remove(file_path)
 
-# Helper function to convert bytes file to image features
-def convert_bytes_to_image_features(bytes_path):
-    """Convert .bytes file to image features for SVM model"""
-    # Read .bytes file
-    with open(bytes_path, 'r', errors='ignore') as f:
-        content = f.read()
-    
-    # Convert content to a 2D representation
-    bytes_values = []
-    for line in content.split('\n'):
-        parts = line.strip().split()
-        if len(parts) > 1:  # Skip empty lines
-            row = []
-            for byte in parts[1:]:  # Skip address
-                try:
-                    value = int(byte, 16)
-                    row.append(value)
-                except ValueError:
-                    row.append(0)  # Use 0 for invalid values
-            bytes_values.extend(row)
-    
-    # Create a square image
-    size = int(np.sqrt(len(bytes_values)))
-    if size < 64:
-        size = 64  # Minimum size
-    
-    # Pad or truncate to size²
-    if len(bytes_values) < size * size:
-        bytes_values.extend([0] * (size * size - len(bytes_values)))
-    elif len(bytes_values) > size * size:
-        bytes_values = bytes_values[:size * size]
-    
-    # Reshape and resize to 64x64
-    image = np.array(bytes_values).reshape(size, size).astype(np.uint8)
-    image = cv2.resize(image, (64, 64))
-    
-    return image.flatten()
-
 # === API Endpoint: Get Scan Logs ===
 @routes.route('/api/logs')
 def get_logs():
@@ -352,13 +383,17 @@ def export_logs_pdf():
     
     # Create table data
     data = [
-        ['Filename', 'Timestamp', 'RF Label', 'RF Conf', 'SVM Label', 'SVM Conf', 'Final Label', 'Final Conf']
+        ['Filename', 'Timestamp', 'RF Label', 'RF Conf', 'SVM Label', 'SVM Conf', 'Final Label', 'Final Conf', 'Malware Type']
     ]
     
     # Add rows to table in reverse timestamp order (newest first)
     sorted_logs = sorted(logs, key=lambda x: x.get('timestamp', ''), reverse=True)
     
     for log in sorted_logs:
+        # Get malware type if available
+        final_label = log.get('final_label', '')
+        malware_type = get_malware_type(final_label)
+            
         row = [
             log.get('filename', ''),
             log.get('timestamp', '')[:16] if log.get('timestamp') else '',
@@ -367,7 +402,8 @@ def export_logs_pdf():
             log.get('svm_label', ''),
             f"{log.get('svm_confidence', '')}%" if log.get('svm_confidence') not in ('', None) else '',
             log.get('final_label', ''),
-            f"{log.get('final_confidence', '')}%" if log.get('final_confidence') not in ('', None) else ''
+            f"{log.get('final_confidence', '')}%" if log.get('final_confidence') not in ('', None) else '',
+            malware_type
         ]
         data.append(row)
     
@@ -500,3 +536,15 @@ def logout():
     session.clear()
     # Redirect to home page
     return redirect('/')
+
+# === API Endpoint: Get Malware Info ===
+@routes.route('/api/malware-info')
+def get_malware_info():
+    """Returns malware types and behaviors for frontend use"""
+    malware_info = {}
+    for malware, malware_type in malware_types.items():
+        malware_info[malware] = {
+            "type": malware_type,
+            "behavior": malware_behaviors.get(malware, "Unknown behavior")
+        }
+    return jsonify(malware_info)

@@ -812,35 +812,68 @@ footer {
 }
 
 /* RF Label specific styles */
-#logTable td:nth-child(3) .label-malware {
+#logTable td:nth-child(3) .label-malware:not([data-type]) {
   background-color: rgba(139, 92, 246, 0.1); /* Purple background */
   color: #8b5cf6; /* Purple text */
 }
 
 /* SVM Label specific styles */
-#logTable td:nth-child(5) .label-malware {
+#logTable td:nth-child(5) .label-malware:not([data-type]) {
   background-color: rgba(6, 182, 212, 0.1); /* Cyan background */
   color: #06b6d4; /* Cyan text */
 }
 
 /* Final Label keeps the original red color */
-
-/* Confidence indicators */
-.confidence-high, .confidence-medium, .confidence-low {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.confidence-high {
+#logTable td:nth-child(7) .label-malware:not([data-type]) {
+  background-color: rgba(239, 68, 68, 0.1);
   color: var(--danger-color);
 }
 
-.confidence-medium {
-  color: var(--warning-color);
+/* Malware type-specific label colors - stronger specificity to override column styles */
+#logTable td .label-malware[data-type="Botnet / Trojan"] {
+  background-color: rgba(244, 63, 94, 0.1);
+  color: #f43f5e; /* Rose/pink color */
 }
 
-.confidence-low {
-  color: var(--text-secondary);
+#logTable td .label-malware[data-type="Worm / Virus / Banking Trojan"] {
+  background-color: rgba(249, 115, 22, 0.1);
+  color: #f97316; /* Orange color */
+}
+
+#logTable td .label-malware[data-type="Trojan"] {
+  background-color: rgba(234, 88, 12, 0.1);
+  color: #ea580c; /* Amber/orange color */
+}
+
+#logTable td .label-malware[data-type="Adware"] {
+  background-color: rgba(132, 204, 22, 0.1);
+  color: #84cc16; /* Lime color */
+}
+
+#logTable td .label-malware[data-type="Backdoor Trojan"] {
+  background-color: rgba(6, 182, 212, 0.1);
+  color: #06b6d4; /* Cyan color */
+}
+
+#logTable td .label-malware[data-type="Trojan / Search Redirector"] {
+  background-color: rgba(168, 85, 247, 0.1);
+  color: #a855f7; /* Purple color */
+}
+
+#logTable td .label-malware[data-type="Obfuscation Tool"] {
+  background-color: rgba(14, 165, 233, 0.1);
+  color: #0ea5e9; /* Light blue color */
+}
+
+#logTable td .label-malware[data-type="Trojan / Downloader"] {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6; /* Blue color */
+}
+
+/* Default malware label styling if no specific type matches */
+.label-malware:not([data-type]) {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
 }
 
 /* Table row highlighting */
@@ -935,4 +968,88 @@ button svg {
   color: var(--text-secondary);
   margin-top: 0.5rem;
   margin-bottom: 0;
+}
+
+/* Confidence indicators */
+.confidence-high, .confidence-medium, .confidence-low {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #000000; /* Black by default */
+}
+
+.confidence-high {
+  color: var(--danger-color);
+}
+
+.confidence-medium {
+  color: var(--warning-color);
+}
+
+.confidence-low {
+  color: var(--text-secondary);
+}
+
+/* RF Conf and SVM Conf columns should be black */
+#logTable td:nth-child(4) span,
+#logTable td:nth-child(6) span {
+  color: #000000 !important;
+}
+
+/* Override column styles to ensure malware type colors take precedence */
+#logTable td:nth-child(3) .label-malware,
+#logTable td:nth-child(5) .label-malware,
+#logTable td:nth-child(7) .label-malware {
+  /* Basic styling to be overridden */
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+/* Type-specific colors that should override the column styles */
+#logTable td .label-malware[data-type="Botnet / Trojan"] {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: #f43f5e !important; /* Rose/pink color */
+}
+
+#logTable td .label-malware[data-type="Worm / Virus / Banking Trojan"] {
+  background-color: rgba(249, 115, 22, 0.1) !important;
+  color: #f97316 !important; /* Orange color */
+}
+
+#logTable td .label-malware[data-type="Trojan"] {
+  background-color: rgba(234, 88, 12, 0.1) !important;
+  color: #ea580c !important; /* Amber/orange color */
+}
+
+#logTable td .label-malware[data-type="Adware"] {
+  background-color: rgba(132, 204, 22, 0.1) !important;
+  color: #84cc16 !important; /* Lime color */
+}
+
+#logTable td .label-malware[data-type="Backdoor Trojan"] {
+  background-color: rgba(6, 182, 212, 0.1) !important;
+  color: #06b6d4 !important; /* Cyan color */
+}
+
+#logTable td .label-malware[data-type="Trojan / Search Redirector"] {
+  background-color: rgba(168, 85, 247, 0.1) !important;
+  color: #a855f7 !important; /* Purple color */
+}
+
+#logTable td .label-malware[data-type="Obfuscation Tool"] {
+  background-color: rgba(14, 165, 233, 0.1) !important;
+  color: #0ea5e9 !important; /* Light blue color */
+}
+
+#logTable td .label-malware[data-type="Trojan / Downloader"] {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important; /* Blue color */
+}
+
+/* Table row highlighting */
+.malware-row {
+  background-color: rgba(239, 68, 68, 0.03);
+}
+
+.malware-row:hover {
+  background-color: rgba(239, 68, 68, 0.08) !important;
 }

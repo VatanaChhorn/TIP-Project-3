@@ -98,6 +98,7 @@
             <th>SVM Conf</th>
             <th>Final Label</th>
             <th>Final Conf</th>
+            <th>Malware Type</th>
           </tr>
         </thead>
         <tbody>
@@ -117,6 +118,7 @@
   let allLogs = [];
   let allUsers = [];
   let selectedUser = null;
+  let malwareTypes = {}; // Will be populated from API
 
   // Toggle loading states
   function showLoading(elementId, isLoading) {
@@ -131,6 +133,23 @@
   // Show/hide table
   function showTable(show) {
     document.getElementById('tableContainer').style.display = show ? 'block' : 'none';
+  }
+
+  // Load malware types from server
+  function loadMalwareTypes() {
+    return fetch('/api/malware-info')
+      .then(res => res.json())
+      .then(data => {
+        // Extract type info from the response
+        for (const [key, value] of Object.entries(data)) {
+          malwareTypes[key] = value.type;
+        }
+        return malwareTypes;
+      })
+      .catch(error => {
+        console.error('Error loading malware types:', error);
+        return {};
+      });
   }
 
   // Fetch users for sidebar
@@ -189,6 +208,14 @@
       });
   }
 
+  // Get malware type from label
+  function getMalwareType(label) {
+    if (!label || label.toLowerCase() === 'benign' || label.toLowerCase() === 'clean') {
+      return 'Clean';
+    }
+    return malwareTypes[label] || 'Unknown Malware';
+  }
+
   // Filter logs by selected user or search
   function filterAndRenderLogs() {
     showLoading('tableLoading', true);
@@ -229,6 +256,9 @@
         row.classList.add('malware-row');
       }
       
+      // Get malware type for this log
+      const malwareType = getMalwareType(log.final_label);
+      
       row.innerHTML = `
         <td title="${log.filename || ''}">${log.filename || ''}</td>
         <td>${log.timestamp ? log.timestamp.substring(0, 16) : ''}</td>
@@ -238,6 +268,7 @@
         <td>${formatConfidence(log.svm_confidence)}</td>
         <td>${formatLabel(log.final_label)}</td>
         <td>${formatConfidence(log.final_confidence)}</td>
+        <td>${malwareType}</td>
       `;
       tbody.appendChild(row);
     });
@@ -250,7 +281,8 @@
     if (label.toLowerCase() === 'benign' || label.toLowerCase() === 'clean') {
       return `<span class="label-clean">${label}</span>`;
     } else {
-      return `<span class="label-malware">${label}</span>`;
+      const type = getMalwareType(label);
+      return `<span class="label-malware" data-type="${type}">${type} (${label})</span>`;
     }
   }
   
@@ -272,6 +304,14 @@
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function() {
+    // Load malware types first, then proceed
+    loadMalwareTypes()
+      .then(() => {
+        // Load users and logs after malware types are loaded
+        loadUsers();
+        loadLogs();
+      });
+    
     // Search button handler
     document.getElementById('searchBtn').onclick = function() {
       selectedUser = null;
@@ -320,10 +360,6 @@
       .then(res => res.ok ? res.text() : Promise.reject('Failed to load navbar'))
       .then(data => document.getElementById('navbar-container').innerHTML = data)
       .catch(console.error);
-
-    // Load users and logs
-    loadUsers();
-    loadLogs();
   });
 </script>
 </body>
