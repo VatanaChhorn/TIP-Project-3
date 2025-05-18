@@ -53,14 +53,6 @@
       </div>
       
       <div class="action-buttons">
-        <button id="exportBtn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Export CSV
-        </button>
         <button id="pdfReportBtn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -302,18 +294,6 @@
       }
     });
     
-    // Export CSV handler
-    document.getElementById('exportBtn').onclick = function() {
-      let url = '/api/logs/export';
-      const searchValue = document.getElementById('searchInput').value.trim();
-      if (selectedUser) {
-        url += '?username=' + encodeURIComponent(selectedUser);
-      } else if (searchValue) {
-        url += '?username=' + encodeURIComponent(searchValue);
-      }
-      window.location = url;
-    };
-    
     // PDF report button handler
     document.getElementById('pdfReportBtn').addEventListener('click', function() {
       let url = '/api/logs/pdf';
@@ -322,7 +302,15 @@
         url += '?username=' + encodeURIComponent(selectedUser);
       } else if (searchValue) {
         url += '?username=' + encodeURIComponent(searchValue);
+      } else {
+        // If no username filter, add a refresh parameter
+        url += '?refresh=';
       }
+      
+      // Always add a random refresh parameter to prevent browser caching
+      const refreshParam = Math.floor(Math.random() * 1000000);
+      url += (url.includes('?') ? '&' : '?') + 'refresh=' + refreshParam;
+      
       // Open PDF in new window
       window.open(url, '_blank');
     });

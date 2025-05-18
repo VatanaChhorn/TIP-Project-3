@@ -4,27 +4,30 @@ import json
 import datetime
 import numpy as np
 import cv2
-from flask import Blueprint, request, jsonify, redirect, url_for
+from flask import Blueprint, request, jsonify, redirect, url_for, make_response
 from werkzeug.utils import secure_filename
 import hashlib
 from flask import session, render_template
 import io
-from fpdf import FPDF
-from flask import make_response
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 label_map = {
-    "0": "Ramnit",
-    "1": "Lollipop",
-    "2": "Kelihos_ver3",
-    "3": "Vundo",
+    "1": "Ramnit",
+    "2": "Lollipop",
+    "3": "Kelihos_ver3",
     "4": "Simda",
     "5": "Tracur",
     "6": "Kelihos_ver1",
     "7": "Obfuscator.ACY",
-    "8": "Gatak"
+    "8": "Gatak",
+    "9": "Yuner.A"
 }
 
 # Add models folder to path
@@ -99,170 +102,6 @@ def extract_features_from_bytes(file_path):
             features.append(token_counts.get(byte_token, 0))
         return features
 
-@routes.route('/api/logs/pdf')
-def get_logs_pdf():
-    username = request.args.get('username')
-    if not os.path.exists(SCAN_LOG_FILE):
-        return jsonify({'error': 'No logs found'}), 404
-    
-    with open(SCAN_LOG_FILE, 'r') as f:
-        logs = json.load(f)
-    
-    if username:
-        logs = [log for log in logs if log['username'] == username]
-        report_title = f"Scan Report for User: {username}"
-    else:
-        report_title = "Complete Scan Report for All Users"
-    
-    # Create PDF with FPDF - ensure landscape orientation for better table display
-    pdf = FPDF(orientation='L')  # 'L' for landscape orientation
-    pdf.set_auto_page_break(auto=True, margin=15)
-    
-    pdf.add_page()
-    
-    # Add title
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, report_title, 0, 1, 'C')
-    pdf.ln(5)
-    
-    # Add timestamp
-    pdf.set_font('Arial', '', 10)
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    pdf.cell(0, 10, f"Generated: {current_time}", 0, 1, 'R')
-    pdf.ln(5)
-    
-    # Define colors for labels and confidence
-    clean_color = (16, 185, 129)  # Success green
-    malware_color = (239, 68, 68)  # Danger red
-    conf_high_color = (16, 185, 129)  # High confidence green
-    conf_med_color = (245, 158, 11)  # Medium confidence orange
-    conf_low_color = (239, 68, 68)  # Low confidence red
-    
-    # Calculate column widths based on table proportions from admin.html
-    total_width = pdf.w - 20  # Total width minus margins
-    col_widths = [
-        total_width * 0.25,  # Filename (25%)
-        total_width * 0.15,  # Timestamp (15%)
-        total_width * 0.12,  # RF Label (12%)
-        total_width * 0.08,  # RF Conf (8%)
-        total_width * 0.12,  # SVM Label (12%)
-        total_width * 0.08,  # SVM Conf (8%)
-        total_width * 0.12,  # Final Label (12%)
-        total_width * 0.08   # Final Conf (8%)
-    ]
-    
-    # Add table headers with styling
-    pdf.set_font('Arial', 'B', 10)
-    pdf.set_fill_color(249, 250, 251)  # Light gray background for header
-    headers = ['Filename', 'Timestamp', 'RF Label', 'RF Conf', 'SVM Label', 'SVM Conf', 'Final Label', 'Final Conf']
-    
-    for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 10, header, 1, 0, 'L', True)
-    pdf.ln()
-    
-    # Helper function to format confidence values
-    def get_confidence_color(value):
-        if value >= 90:
-            return conf_high_color
-        elif value >= 70:
-            return conf_med_color
-        return conf_low_color
-    
-    # Add table data with styling
-    pdf.set_font('Arial', '', 9)
-    for log in logs:
-        # Filename column with ellipsis if too long
-        filename = log.get('filename', '')
-        if len(filename) > 40:
-            filename = filename[:37] + '...'
-        pdf.cell(col_widths[0], 8, filename, 1, 0, 'L')
-        
-        # Timestamp column
-        timestamp = log.get('timestamp', '')[:16]  # Trim to date and time only
-        pdf.cell(col_widths[1], 8, timestamp, 1, 0, 'L')
-        
-        # RF Label with color
-        rf_label = log.get('rf_label', '')
-        pdf.set_text_color(*(clean_color if rf_label.lower() in ['benign', 'clean', ''] else malware_color))
-        pdf.cell(col_widths[2], 8, rf_label, 1, 0, 'L')
-        
-        # RF Confidence with color
-        rf_conf = float(log.get('rf_confidence', 0))
-        pdf.set_text_color(*get_confidence_color(rf_conf))
-        pdf.cell(col_widths[3], 8, f"{rf_conf}%", 1, 0, 'L')
-        
-        # SVM Label with color
-        svm_label = log.get('svm_label', '')
-        pdf.set_text_color(*(clean_color if svm_label.lower() in ['benign', 'clean', ''] else malware_color))
-        pdf.cell(col_widths[4], 8, svm_label, 1, 0, 'L')
-        
-        # SVM Confidence with color
-        svm_conf = float(log.get('svm_confidence', 0))
-        pdf.set_text_color(*get_confidence_color(svm_conf))
-        pdf.cell(col_widths[5], 8, f"{svm_conf}%", 1, 0, 'L')
-        
-        # Final Label with color
-        final_label = log.get('final_label', '')
-        pdf.set_text_color(*(clean_color if final_label.lower() in ['benign', 'clean', ''] else malware_color))
-        pdf.cell(col_widths[6], 8, final_label, 1, 0, 'L')
-        
-        # Final Confidence with color
-        final_conf = float(log.get('final_confidence', 0))
-        pdf.set_text_color(*get_confidence_color(final_conf))
-        pdf.cell(col_widths[7], 8, f"{final_conf}%", 1, 0, 'L')
-        
-        pdf.ln()
-        pdf.set_text_color(0, 0, 0)  # Reset text color
-    
-    # Add summary statistics
-    pdf.ln(10)
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 10, 'Summary Statistics', 0, 1)
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 10, f"Total Scans: {len(logs)}", 0, 1)
-    
-    if len(logs) > 0:
-        # Count by malware type
-        malware_counts = {}
-        for log in logs:
-            label = log.get('final_label', 'Unknown')
-            if label:
-                malware_counts[label] = malware_counts.get(label, 0) + 1
-        
-        pdf.cell(0, 10, "Malware Distribution:", 0, 1)
-        
-        # Improved layout for malware distribution
-        items_per_row = 3
-        x_start = pdf.get_x()
-        y_start = pdf.get_y()
-        max_width = col_widths[0] + col_widths[1]  # Use first two columns width
-        
-        for i, (label, count) in enumerate(malware_counts.items()):
-            percentage = (count / len(logs)) * 100
-            row = i // items_per_row
-            col = i % items_per_row
-            
-            # Position for this item
-            x = x_start + (col * max_width)
-            y = y_start + (row * 8)
-            
-            pdf.set_xy(x, y)
-            pdf.set_text_color(*(clean_color if label.lower() in ['benign', 'clean'] else malware_color))
-            pdf.cell(max_width, 8, f"- {label}: {count} ({percentage:.1f}%)", 0)
-    
-    # Generate PDF
-    pdf_output = io.BytesIO()
-    pdf_string = pdf.output(dest='S')
-    pdf_output.write(pdf_string.encode('latin-1'))
-    pdf_output.seek(0)
-    
-    # Create response
-    response = make_response(pdf_output.getvalue())
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename=scan_report{"_"+username if username else ""}.pdf'
-    
-    return response
-
 # === File Scan Endpoint with True Hybrid Mode ===
 @routes.route('/predict', methods=['POST'])
 def predict():
@@ -292,18 +131,8 @@ def predict():
             static_features = extract_features_from_bytes(file_path)
             # Generate image features for SVM model
             dynamic_features = convert_bytes_to_image_features(file_path)
-            
-        # For .png files
-        elif filename.endswith('.png'):
-            # Get static features for RF model
-            static_features = extract_features_from_image(file_path)
-            # Get dynamic features for SVM model
-            image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
-            if image is not None:
-                resized_image = cv2.resize(image, (64, 64))
-                dynamic_features = resized_image.flatten()
         else:
-            return jsonify({'error': 'Unsupported file type'}), 400
+            return jsonify({'error': 'Unsupported file type. Only .bytes files are supported.'}), 400
 
         # Process with RF model (static features)
         if static_features is not None:
@@ -312,8 +141,8 @@ def predict():
                 rf_probs = rf_model.predict_proba(scaled_static)[0]
                 rf_confidence = round(np.max(rf_probs) * 100, 2)
                 rf_pred = rf_model.predict(scaled_static)
-                rf_label = str(encoder_rf.inverse_transform(rf_pred)[0])
-                rf_label = label_map.get(rf_label, rf_label)
+                rf_class = str(encoder_rf.inverse_transform(rf_pred)[0])
+                rf_label = label_map.get(rf_class, rf_class)
             except Exception as e:
                 print(f"RF model error: {str(e)}")
                 rf_label = "Error"
@@ -326,7 +155,8 @@ def predict():
                 svm_probs = svm_model.predict_proba(scaled_dynamic)[0]
                 svm_confidence = round(np.max(svm_probs) * 100, 2)
                 predicted_class_index = np.argmax(svm_probs)
-                svm_label = str(encoder_svm.inverse_transform([predicted_class_index])[0])
+                svm_class = str(encoder_svm.inverse_transform([predicted_class_index])[0])
+                svm_label = label_map.get(svm_class, svm_class)
             except Exception as e:
                 print(f"SVM model error: {str(e)}")
                 svm_label = "Error"
@@ -342,11 +172,15 @@ def predict():
             rf_weighted = 0.6 * rf_confidence  # 60% weight to RF
             svm_weighted = 0.4 * svm_confidence  # 40% weight to SVM
             
+            # Debug log for model comparison
+            print(f"RF: {rf_label} ({rf_confidence}%), SVM: {svm_label} ({svm_confidence}%)")
+            
             # If models agree on the label
             if rf_label == svm_label:
                 # Use the agreed label with combined weighted confidence
                 final_label = rf_label
                 final_confidence = round(rf_weighted + svm_weighted, 2)
+                print(f"Models agree: Final confidence = {rf_weighted} + {svm_weighted} = {final_confidence}")
             else:
                 # Models disagree - use weighted confidence to determine winner
                 if rf_weighted >= svm_weighted:
@@ -400,31 +234,6 @@ def predict():
         if os.path.exists(file_path):
             os.remove(file_path)
 
-# Helper function to extract static features from an image file
-def extract_features_from_image(image_path):
-    """Extract static features from image file for RF model"""
-    # Read binary content from image file
-    with open(image_path, 'rb') as f:
-        binary_data = f.read()
-    
-    # Convert binary to hex representation
-    hex_data = binary_data.hex()
-    
-    # Create byte frequency features
-    features = [len(hex_data) // 2]  # Length of binary data
-    byte_counts = {}
-    for i in range(0, len(hex_data), 2):
-        if i + 1 < len(hex_data):
-            byte = hex_data[i:i+2].upper()
-            byte_counts[byte] = byte_counts.get(byte, 0) + 1
-    
-    # Create feature vector with same structure as RF model expects
-    for i in range(256):
-        byte_token = f'{i:02X}'
-        features.append(byte_counts.get(byte_token, 0))
-    
-    return features
-
 # Helper function to convert bytes file to image features
 def convert_bytes_to_image_features(bytes_path):
     """Convert .bytes file to image features for SVM model"""
@@ -474,6 +283,150 @@ def get_logs():
     if username:
         logs = [log for log in logs if log['username'] == username]
     return jsonify(logs)
+
+# === API Endpoint: Export Logs as PDF ===
+@routes.route('/api/logs/pdf')
+def export_logs_pdf():
+    # Generate a unique timestamp for this report
+    report_timestamp = datetime.datetime.now()
+    timestamp_str = report_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    file_timestamp = report_timestamp.strftime("%Y%m%d_%H%M%S")
+    
+    # Get username filter if provided
+    username = request.args.get('username')
+    
+    # Clear any previous data and read directly from file for each request
+    try:
+        # Always read fresh from disk, never cache
+        with open(SCAN_LOG_FILE, 'r') as f:
+            all_logs = json.load(f)
+    except Exception as e:
+        print(f"Error reading scan logs: {e}")
+        return jsonify({"error": f"Error reading logs: {str(e)}"}), 500
+    
+    # Filter logs by username if needed
+    if username:
+        logs = [log for log in all_logs if log.get('username') == username]
+        report_title = f"Malware Scan Report - User: {username}"
+        filename = f"malware_scan_report_{username}_{file_timestamp}.pdf"
+    else:
+        logs = all_logs
+        report_title = "Malware Scan Report - All Users"
+        filename = f"malware_scan_report_all_{file_timestamp}.pdf"
+    
+    # Count malware vs clean files
+    malware_count = sum(1 for log in logs if log.get('final_label', '').lower() not in ('benign', 'clean'))
+    benign_count = sum(1 for log in logs if log.get('final_label', '').lower() in ('benign', 'clean'))
+    total_scans = len(logs)
+    
+    # Debug info
+    print(f"[PDF] Generating report at {timestamp_str}")
+    print(f"[PDF] Total logs found: {total_scans}")
+    print(f"[PDF] Username filter: {username if username else 'None'}")
+    
+    # Create PDF buffer
+    buffer = io.BytesIO()
+    
+    # Set up the PDF document
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(letter),
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    title_style.alignment = 1  # Center alignment
+    
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.black,
+        alignment=1  # Center alignment
+    )
+    
+    # Create table data
+    data = [
+        ['Filename', 'Timestamp', 'RF Label', 'RF Conf', 'SVM Label', 'SVM Conf', 'Final Label', 'Final Conf']
+    ]
+    
+    # Add rows to table in reverse timestamp order (newest first)
+    sorted_logs = sorted(logs, key=lambda x: x.get('timestamp', ''), reverse=True)
+    
+    for log in sorted_logs:
+        row = [
+            log.get('filename', ''),
+            log.get('timestamp', '')[:16] if log.get('timestamp') else '',
+            log.get('rf_label', ''),
+            f"{log.get('rf_confidence', '')}%" if log.get('rf_confidence') not in ('', None) else '',
+            log.get('svm_label', ''),
+            f"{log.get('svm_confidence', '')}%" if log.get('svm_confidence') not in ('', None) else '',
+            log.get('final_label', ''),
+            f"{log.get('final_confidence', '')}%" if log.get('final_confidence') not in ('', None) else ''
+        ]
+        data.append(row)
+    
+    # Create table with clear style
+    table = Table(data, repeatRows=1)
+    table_style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+        ('ALIGN', (2, 1), (-1, -1), 'CENTER'),
+    ])
+    table.setStyle(table_style)
+    
+    # Build the PDF content
+    elements = []
+    
+    # Add title and timestamp
+    elements.append(Paragraph(report_title, title_style))
+    elements.append(Paragraph(f"Generated on: {timestamp_str}", subtitle_style))
+    
+    # Add summary
+    summary_style = styles['Normal']
+    summary_style.spaceAfter = 12
+    
+    elements.append(Spacer(1, 0.25 * inch))
+    elements.append(Paragraph(f"Total Scans: {total_scans}", summary_style))
+    elements.append(Paragraph(f"Malware Detected: {malware_count}", summary_style))
+    elements.append(Paragraph(f"Clean Files: {benign_count}", summary_style))
+    elements.append(Spacer(1, 0.25 * inch))
+    
+    # Add table
+    elements.append(table)
+    
+    # Build PDF
+    doc.build(elements)
+    
+    # Get PDF data
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    # Create response with cache prevention headers
+    response = make_response(pdf_data)
+    response.headers["Content-Disposition"] = f"inline; filename={filename}"
+    response.headers["Content-Type"] = "application/pdf"
+    
+    # Add cache prevention headers
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
+    print(f"[PDF] Report generated successfully with {len(sorted_logs)} records")
+    return response
 
 # === User Registration Endpoint ===
 @routes.route('/register', methods=['POST'])

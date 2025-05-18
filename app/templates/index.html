@@ -22,9 +22,9 @@
       <h3>Scan a File</h3>
       <form id="uploadForm">
         <div class="form-group">
-          <label for="file">Choose a .bytes or .png file:</label>
-          <input type="file" id="file" name="file" accept=".bytes,.png" required />
-          <p class="form-hint">We support .bytes files (extracted from executables) or .png images (visualized byte content)</p>
+          <label for="file">Choose a .bytes file:</label>
+          <input type="file" id="file" name="file" accept=".bytes" required />
+          <p class="form-hint">We support .bytes files extracted from executable binaries for malware analysis</p>
         </div>
         <button type="submit">Scan File</button>
       </form>
@@ -42,6 +42,12 @@
             <p><strong>Hybrid Result:</strong> <span id="final_result"></span> <span class="confidence" id="final_conf"></span></p>
           </div>
         </div>
+        
+        <div class="calculation-box" id="calculation_details" style="display:none;">
+          <h5>How the hybrid result was calculated:</h5>
+          <div class="calculation-steps" id="calculation_steps"></div>
+        </div>
+        
         <div id="hybrid_message"></div>
       </div>
     </div>
@@ -83,6 +89,49 @@
       document.getElementById('svm_conf').textContent = data.svm_confidence !== undefined ? `(${data.svm_confidence}%)` : '';
       document.getElementById('final_result').textContent = data.final_result || data.result || 'N/A';
       document.getElementById('final_conf').textContent = data.final_confidence !== undefined ? `(${data.final_confidence}%)` : '';
+
+      // Show calculation details
+      const calculationBox = document.getElementById('calculation_details');
+      const calculationSteps = document.getElementById('calculation_steps');
+      
+      // Only show calculation when both models have results
+      if (data.rf_confidence && data.svm_confidence) {
+        const rfWeighted = (data.rf_confidence * 0.6).toFixed(2);
+        const svmWeighted = (data.svm_confidence * 0.4).toFixed(3);
+        
+        let calculationHTML = '';
+        if (data.rf_result === data.svm_result) {
+          // Models agree
+          calculationHTML = `
+            <p><strong>Models agree on classification:</strong> ${data.rf_result}</p>
+            <p><strong>Weight distribution:</strong> RF (60%) + SVM (40%)</p>
+            <div class="calculation-formula">
+              <span class="formula-step">RF weighted: ${data.rf_confidence}% × 0.6 = ${rfWeighted}%</span>
+              <span class="formula-step">SVM weighted: ${data.svm_confidence}% × 0.4 = ${svmWeighted}%</span>
+              <span class="formula-step">Final confidence: ${rfWeighted}% + ${svmWeighted}% = ${data.final_confidence}%</span>
+            </div>
+            <p class="calculation-note">When both models agree, their weighted confidences are combined.</p>
+          `;
+        } else {
+          // Models disagree
+          const winningModel = parseFloat(rfWeighted) >= parseFloat(svmWeighted) ? 'RF' : 'SVM';
+          calculationHTML = `
+            <p><strong>Models disagree on classification:</strong></p>
+            <p><strong>Weight distribution:</strong> RF (60%) + SVM (40%)</p>
+            <div class="calculation-formula">
+              <span class="formula-step">RF weighted: ${data.rf_confidence}% × 0.6 = ${rfWeighted}%</span>
+              <span class="formula-step">SVM weighted: ${data.svm_confidence}% × 0.4 = ${svmWeighted}%</span>
+              <span class="formula-step">Winner: ${winningModel} model with ${winningModel === 'RF' ? rfWeighted : svmWeighted}%</span>
+            </div>
+            <p class="calculation-note">When models disagree, the model with higher weighted confidence determines the result.</p>
+          `;
+        }
+        
+        calculationSteps.innerHTML = calculationHTML;
+        calculationBox.style.display = 'block';
+      } else {
+        calculationBox.style.display = 'none';
+      }
 
       // Hybrid result message
       let label = data.final_result || data.result || '';
